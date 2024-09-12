@@ -24,10 +24,23 @@ const EPUBReader = ({ content, metadata }) => {
   useEffect(() => {
     const loadChapter = async () => {
       if (toc[currentChapter]) {
-        const chapter = await content.spine.get(toc[currentChapter].href);
-        const doc = await chapter.load();
-        let text = doc.body ? doc.body.innerHTML : doc.documentElement.outerHTML;
-        setChapterContent(text);
+        try {
+          const chapter = await content.spine.get(toc[currentChapter].href);
+          const doc = await chapter.load();
+          let text = '';
+          if (doc.body) {
+            text = doc.body.innerHTML;
+          } else if (doc.documentElement) {
+            text = doc.documentElement.outerHTML;
+          } else {
+            console.warn('Unable to extract content from chapter');
+            text = 'Content not available';
+          }
+          setChapterContent(text);
+        } catch (error) {
+          console.error('Error loading chapter:', error);
+          setChapterContent('Error loading chapter content');
+        }
       }
     };
     loadChapter();
