@@ -32,6 +32,8 @@ const EPUBReader = ({ content, metadata }) => {
             text = doc.body.innerHTML;
           } else if (doc.documentElement) {
             text = doc.documentElement.outerHTML;
+          } else if (typeof doc === 'string') {
+            text = doc;
           } else {
             console.warn('Unable to extract content from chapter');
             text = 'Content not available';
@@ -39,7 +41,7 @@ const EPUBReader = ({ content, metadata }) => {
           setChapterContent(text);
         } catch (error) {
           console.error('Error loading chapter:', error);
-          setChapterContent('Error loading chapter content');
+          setChapterContent('Error loading chapter content. Please try another chapter.');
         }
       }
     };
