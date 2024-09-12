@@ -18,7 +18,8 @@ const EPUBReader = ({ content }) => {
     const loadChapter = async () => {
       if (toc[currentChapter]) {
         const chapter = await content.spine.get(toc[currentChapter].href);
-        const text = await chapter.text();
+        const doc = await chapter.load();
+        const text = doc.body.innerHTML;
         setChapterContent(text);
       }
     };
