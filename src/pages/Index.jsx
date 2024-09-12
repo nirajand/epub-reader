@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import EPUBReader from '../components/EPUBReader';
 import FileUpload from '../components/FileUpload';
 
@@ -13,14 +12,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">EPUB Reader</h1>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-        {!epubContent ? (
-          <FileUpload onFileUpload={handleFileUpload} />
-        ) : (
-          <EPUBReader content={epubContent} />
-        )}
-      </div>
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">EPUB Reader</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!epubContent ? (
+            <FileUpload onFileUpload={handleFileUpload} />
+          ) : (
+            <EPUBReader content={epubContent} />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const EPUBReader = ({ content }) => {
   const [currentChapter, setCurrentChapter] = useState(0);
@@ -55,10 +56,12 @@ const EPUBReader = ({ content }) => {
           Next Chapter
         </Button>
       </div>
-      <div
-        className="prose max-w-none flex-grow overflow-y-auto"
-        dangerouslySetInnerHTML={{ __html: chapterContent }}
-      />
+      <ScrollArea className="flex-grow">
+        <div
+          className="prose max-w-none p-4"
+          dangerouslySetInnerHTML={{ __html: chapterContent }}
+        />
+      </ScrollArea>
     </div>
   );
 };
