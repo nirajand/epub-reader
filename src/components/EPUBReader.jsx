@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ReactReader } from 'react-reader';
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FiChevronLeft, FiChevronRight, FiList } from 'react-icons/fi';
+import { Slider } from "@/components/ui/slider";
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 const EPUBReader = ({ content, metadata }) => {
-  const [currentChapter, setCurrentChapter] = useState(0);
-  const [chapterContent, setChapterContent] = useState('');
+  const [location, setLocation] = useState(null);
+  const [totalLocations, setTotalLocations] = useState(null);
   const [toc, setToc] = useState([]);
-  const [fontSize, setFontSize] = useState(16);
-  const [lineHeight, setLineHeight] = useState(1.5);
-  const contentRef = useRef(null);
+  const [fontSize, setFontSize] = useState(100);
+  const renditionRef = useRef(null);
 
   useEffect(() => {
     const loadToc = async () => {
@@ -21,64 +20,48 @@ const EPUBReader = ({ content, metadata }) => {
     loadToc();
   }, [content]);
 
-  useEffect(() => {
-    const loadChapter = async () => {
-      if (toc[currentChapter]) {
-        try {
-          const chapter = await content.spine.get(toc[currentChapter].href);
-          const doc = await chapter.load();
-          let text = '';
-          if (doc.body) {
-            text = doc.body.innerHTML;
-          } else if (doc.documentElement) {
-            text = doc.documentElement.outerHTML;
-          } else if (typeof doc === 'string') {
-            text = doc;
-          } else {
-            console.warn('Unable to extract content from chapter');
-            text = 'Content not available';
-          }
-          setChapterContent(text);
-        } catch (error) {
-          console.error('Error loading chapter:', error);
-          setChapterContent('Error loading chapter content. Please try another chapter.');
-        }
-      }
-    };
-    loadChapter();
-  }, [content, currentChapter, toc]);
+  const locationChanged = (epubcifi) => {
+    setLocation(epubcifi);
+  };
 
-  const nextChapter = () => {
-    if (currentChapter < toc.length - 1) {
-      setCurrentChapter(currentChapter + 1);
+  const getRendition = (rendition) => {
+    renditionRef.current = rendition;
+    rendition.themes.fontSize(`${fontSize}%`);
+  };
+
+  const changeFontSize = (newSize) => {
+    setFontSize(newSize);
+    if (renditionRef.current) {
+      renditionRef.current.themes.fontSize(`${newSize}%`);
     }
-  };
-
-  const prevChapter = () => {
-    if (currentChapter > 0) {
-      setCurrentChapter(currentChapter - 1);
-    }
-  };
-
-  const handleFontSizeChange = (value) => {
-    setFontSize(value[0]);
-  };
-
-  const handleLineHeightChange = (value) => {
-    setLineHeight(value[0]);
   };
 
   const handleChapterSelect = (value) => {
-    setCurrentChapter(parseInt(value));
+    const chapter = toc.find((item, index) => index.toString() === value);
+    if (chapter && renditionRef.current) {
+      renditionRef.current.display(chapter.href);
+    }
+  };
+
+  const nextPage = () => {
+    if (renditionRef.current) {
+      renditionRef.current.next();
+    }
+  };
+
+  const prevPage = () => {
+    if (renditionRef.current) {
+      renditionRef.current.prev();
+    }
   };
 
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex justify-between items-center">
-        <Button onClick={prevChapter} disabled={currentChapter === 0}>
+        <Button onClick={prevPage}>
           <FiChevronLeft className="mr-2" /> Previous
         </Button>
-        <Select value={currentChapter.toString()} onValueChange={handleChapterSelect}>
+        <Select onValueChange={handleChapterSelect}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select chapter" />
           </SelectTrigger>
@@ -90,38 +73,34 @@ const EPUBReader = ({ content, metadata }) => {
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={nextChapter} disabled={currentChapter === toc.length - 1}>
+        <Button onClick={nextPage}>
           Next <FiChevronRight className="ml-2" />
         </Button>
       </div>
       <div className="flex space-x-4 items-center">
         <span>Font Size:</span>
         <Slider
-          min={12}
-          max={24}
-          step={1}
+          min={50}
+          max={200}
+          step={10}
           value={[fontSize]}
-          onValueChange={handleFontSizeChange}
-          className="w-[200px]"
-        />
-        <span>Line Height:</span>
-        <Slider
-          min={1}
-          max={2}
-          step={0.1}
-          value={[lineHeight]}
-          onValueChange={handleLineHeightChange}
+          onValueChange={(value) => changeFontSize(value[0])}
           className="w-[200px]"
         />
       </div>
-      <ScrollArea className="flex-grow">
-        <div
-          ref={contentRef}
-          className="prose max-w-none p-4"
-          style={{ fontSize: `${fontSize}px`, lineHeight: lineHeight }}
-          dangerouslySetInnerHTML={{ __html: chapterContent }}
+      <div style={{ height: 'calc(100vh - 200px)', position: 'relative' }}>
+        <ReactReader
+          url={content.url}
+          location={location}
+          locationChanged={locationChanged}
+          getRendition={getRendition}
+          tocChanged={toc => setToc(toc)}
+          epubOptions={{
+            flow: 'scrolled',
+            manager: 'continuous'
+          }}
         />
-      </ScrollArea>
+      </div>
     </div>
   );
 };
