@@ -6,38 +6,41 @@ import ePub from 'epubjs';
 const FileUpload = ({ onFileUpload }) => {
   const fileInputRef = useRef(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     setError(null);
+    setIsLoading(true);
+
     if (file) {
       try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const arrayBuffer = e.target.result;
-            console.log("File loaded successfully, creating ePub object...");
-            const book = ePub(arrayBuffer);
-            console.log("ePub object created, waiting for it to be ready...");
-            await book.ready;
-            console.log("ePub object is ready, calling onFileUpload...");
-            onFileUpload(book);
-          } catch (error) {
-            console.error("Error processing file:", error);
-            setError("Error processing file. Please try again with a different EPUB file.");
-          }
-        };
-        reader.onerror = (e) => {
-          console.error("FileReader error:", e);
-          setError("Error reading file. Please try again.");
-        };
-        console.log("Starting to read file...");
-        reader.readAsArrayBuffer(file);
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        console.log("File loaded successfully, creating ePub object...");
+        const book = ePub(arrayBuffer);
+        console.log("ePub object created, waiting for it to be ready...");
+        await book.ready;
+        console.log("ePub object is ready, calling onFileUpload...");
+        onFileUpload(book);
       } catch (error) {
-        console.error("Error in file handling:", error);
-        setError("An unexpected error occurred. Please try again.");
+        console.error("Error processing file:", error);
+        setError("Error processing file. Please try again with a different EPUB file.");
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
+      setError("No file selected. Please choose an EPUB file.");
     }
+  };
+
+  const readFileAsArrayBuffer = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(event.target.result);
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   return (
@@ -52,8 +55,9 @@ const FileUpload = ({ onFileUpload }) => {
       <Button
         onClick={() => fileInputRef.current.click()}
         className="mb-4"
+        disabled={isLoading}
       >
-        Upload EPUB File
+        {isLoading ? 'Loading...' : 'Upload EPUB File'}
       </Button>
       <p className="text-sm text-gray-500">
         Select an EPUB file to start reading
