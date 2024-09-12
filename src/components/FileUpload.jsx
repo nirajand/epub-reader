@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FiUpload } from 'react-icons/fi';
 import ePub from 'epubjs';
 
 const FileUpload = ({ onFileUpload }) => {
@@ -14,14 +16,18 @@ const FileUpload = ({ onFileUpload }) => {
     setIsLoading(true);
 
     if (file) {
+      if (file.type !== 'application/epub+zip') {
+        setError("Invalid file type. Please upload an EPUB file.");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const arrayBuffer = await readFileAsArrayBuffer(file);
-        console.log("File loaded successfully, creating ePub object...");
         const book = ePub(arrayBuffer);
-        console.log("ePub object created, waiting for it to be ready...");
         await book.ready;
-        console.log("ePub object is ready, calling onFileUpload...");
-        onFileUpload(book);
+        const metadata = await book.loaded.metadata;
+        onFileUpload(book, metadata);
       } catch (error) {
         console.error("Error processing file:", error);
         setError("Error processing file. Please try again with a different EPUB file.");
@@ -44,7 +50,7 @@ const FileUpload = ({ onFileUpload }) => {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center space-y-4">
       <Input
         type="file"
         accept=".epub"
@@ -54,18 +60,20 @@ const FileUpload = ({ onFileUpload }) => {
       />
       <Button
         onClick={() => fileInputRef.current.click()}
-        className="mb-4"
+        className="flex items-center space-x-2"
         disabled={isLoading}
       >
-        {isLoading ? 'Loading...' : 'Upload EPUB File'}
+        <FiUpload className="w-4 h-4" />
+        <span>{isLoading ? 'Loading...' : 'Upload EPUB File'}</span>
       </Button>
       <p className="text-sm text-gray-500">
         Select an EPUB file to start reading
       </p>
       {error && (
-        <p className="text-sm text-red-500 mt-2">
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
     </div>
   );
