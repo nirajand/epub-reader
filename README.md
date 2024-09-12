@@ -1,24 +1,5 @@
-# Welcome to your GPT Engineer project
+# epublio-reader
 
-## Project info
-
-**Project**: epublio-reader
-
-**URL**: https://run.gptengineer.app/projects/a3c5fb56-2f30-49ac-99d4-e6c439d7d405/improve
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use GPT Engineer**
-
-Simply visit the GPT Engineer project at [GPT Engineer](https://gptengineer.app/projects/a3c5fb56-2f30-49ac-99d4-e6c439d7d405/improve) and start prompting.
-
-Changes made via gptengineer.app will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in the GPT Engineer UI.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -38,20 +19,6 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
 ## What technologies are used for this project?
 
 This project is built with .
@@ -61,12 +28,50 @@ This project is built with .
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+At the minimum you will need to give ReactReader you will need this:
 
-All GPT Engineer projects can be deployed directly via the GPT Engineer app.
+    An url that points to the epub-file
+    location (in epub) and a locationChanged function to store the change in location
+    Set a height for the container
 
-Simply visit your project at [GPT Engineer](https://gptengineer.app/projects/a3c5fb56-2f30-49ac-99d4-e6c439d7d405/improve) and click on Share -> Publish.
 
-## I want to use a custom domain - is that possible?
+```
+import React, { useState } from 'react'
+import { ReactReader } from 'react-reader'
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.gptengineer.app/tips-tricks/custom-domain/)
+export const App = () => {
+  const [location, setLocation] = useState<string | number>(0)
+  return (
+    <div style={{ height: '100vh' }}>
+      <ReactReader
+        url="https://react-reader.metabits.no/files/alice.epub"
+        location={location}
+        locationChanged={(epubcfi: string) => setLocation(epubcfi)}
+      />
+    </div>
+  )
+}
+```
+
+ReactReader props
+
+    title [string] - the title of the book, displayed above the reading-canvas
+    showToc [boolean] - whether to show the toc / toc-nav
+    readerStyles [object] - override the default styles
+    epubViewStyles [object] - override the default styles for inner EpubView
+    swipeable [boolean, default false] - enable swiping left/right with react-swipeable. Warning this will disable interacting with epub.js iframe content like selection
+
+ReactReader props passed to inner EpubView
+
+    url [string, required] - url to the epub-file, if its on another domain, remember to add cors for the file. Epubjs fetch this by a http-call, so it need to be public available.
+    loadingView [element] - if you want to customize the loadingView
+    location [string, number, null] - set / update location of the epub
+    locationChanged [func] - a function that receives the current location while user is reading. This function is called everytime the page changes, and also when it first renders.
+    tocChanged [func] - when the reader has parsed the book you will receive an array of the chapters
+    epubInitOptions [object] - pass custom properties to the epub init function, see epub.js
+    epubOptions [object] - pass custom properties to the epub rendition, see epub.js's book.renderTo function
+    getRendition [func] - when epubjs has rendered the epub-file you can get access to the epubjs-rendition object here
+    isRTL [boolean] - support for RTL reading direction, thanks to @ktpm489
+
+EpubView props
+EpubView is just the iframe-view from EpubJS if you would like to build the reader yourself, see above for props.
