@@ -19,7 +19,14 @@ const EPUBReader = ({ content }) => {
       if (toc[currentChapter]) {
         const chapter = await content.spine.get(toc[currentChapter].href);
         const doc = await chapter.load();
-        const text = doc.body.innerHTML;
+        let text = '';
+        if (doc && doc.body) {
+          text = doc.body.innerHTML;
+        } else if (doc && doc.documentElement) {
+          text = doc.documentElement.outerHTML;
+        } else {
+          text = 'Unable to load chapter content';
+        }
         setChapterContent(text);
       }
     };
